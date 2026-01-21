@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "duty-engineer",
+  "version": "0.2.1",
+  "identifier": "com.serhii.duty-engineer",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "duty-engineer",
+        "width": 320,
+        "height": 233,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.ico",
+      "icons/128x128.ico",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ]
+  }
+}
