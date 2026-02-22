@@ -82,10 +82,10 @@ pub async fn make_call(manager: &Manager, phone_number: &str, ami_operator: &Ami
 
 /// Standardize phone number for using with Asterisk
 /// 
-/// Convert only phone numbers for ukrain region
+/// Convert only phone numbers for ukrainian region
 /// From `+38(050)-111-11-11` to 0501111111
 /// # Argument
-/// * `phone_number` - Phone number to prse
+/// * `phone_number` - Phone number to parse
 fn parse_phone(phone_number: &str) -> String {
     phone_number.replace("(", "")
         .replace(")", "")

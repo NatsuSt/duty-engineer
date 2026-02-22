@@ -3,5 +3,9 @@
     "@tailwindcss/cli": "^4.1.18",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "typescript": "^5.9.3"
   }
 }
