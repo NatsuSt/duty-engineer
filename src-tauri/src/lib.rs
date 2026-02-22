@@ -7,6 +7,7 @@ use tauri::{AppHandle, Window, App,
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 use crate::config::{AppConfig, ConfigManager};
+use crate::settings::{get_current_config, save_config, save_asterisk_config};
 use crate::asterisk::{make_call, register_client};
 
 use asterisk_manager::Manager as AsManager;
@@ -18,6 +19,7 @@ use anyhow::Result;
 mod config;
 mod models;
 mod asterisk;
+mod settings;
 
 
 /// Command to change size of windows
@@ -29,10 +31,18 @@ async fn resize_window(webview_window: WebviewWindow, width: f64, height: f64) -
 
 /// Command to retrieve engineer current selected engineer
 #[tauri::command]
-fn retrieve_current_engineer(state: State<'_, Mutex<AppConfig>>) -> String {
+async fn retrieve_current_engineer(app: AppHandle, state: State<'_, Mutex<AppConfig>>) -> tauri::Result<String> {
     let config = state.lock().unwrap();
+    if config.current_duty_index >= config.engineers.len() {
+        let _ = app.dialog()
+            .message("Індекс вийшов за межі у файлі, переведіть його у нульове положення")
+            .title("Помилка при зчитуванні конфігурації")
+            .kind(MessageDialogKind::Error)
+            .blocking_show();
+        app.exit(1);
+    }
     let engineer = config.engineers[config.current_duty_index].clone();
-    serde_json::to_string(&engineer).unwrap()
+    Ok(serde_json::to_string(&engineer).unwrap())
 }
 
 
@@ -92,10 +102,11 @@ async fn call_engineer(app: AppHandle) -> Result<(), String> {
 /// 
 /// This method set up handlers for quit amd change duty engineer action
 fn create_tray_menu(app: &mut App) -> Result<(), Error> {
+    let settings = MenuItem::with_id(app, "settings", "Налаштування", true, None::<&str>)?;
     let change_engineer = MenuItem::with_id(app, "change", "Змінити чергового", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?; // Add separate line
     let quit_i = MenuItem::with_id(app, "quit", "Вихід", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&change_engineer, &separator, &quit_i])?;
+    let menu = Menu::with_items(app, &[&settings, &change_engineer, &separator, &quit_i])?;
 
     let _ = TrayIconBuilder::new()
         .menu(&menu)
@@ -104,6 +115,24 @@ fn create_tray_menu(app: &mut App) -> Result<(), Error> {
             "quit" => {
                 info!("quit menu item was clicked");
                 app.exit(0);
+            },
+            "settings" => {
+                check_config(app);
+                let windows = app.webview_windows();
+                if windows.contains_key("settings") {
+                    return 
+                }
+                let window = tauri::
+                WebviewWindowBuilder::new(
+                    app,
+                    "settings",
+                    tauri::WebviewUrl::App("settings/index.html".into())
+                )
+                    .build().unwrap();
+                window.set_title("Налаштування").unwrap();
+                // window.set_size(LogicalSize::new(343, 485)).unwrap();
+                window.set_decorations(false).unwrap();
+                // window.set_min_size(Some(LogicalSize::new(343, 485))).unwrap();
             },
             "change" => {
                 // retrieve app state
@@ -214,6 +243,9 @@ pub fn run() {
             resize_window, 
             retrieve_current_engineer,
             call_engineer,
+            get_current_config,
+            save_config,
+            save_asterisk_config,
         ])
         .on_window_event(window_event_handler).run(tauri::generate_context!())
         .expect("error while running tauri application");

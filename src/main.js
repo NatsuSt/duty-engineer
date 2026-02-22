@@ -4,7 +4,6 @@ const { listen } = window.__TAURI__.event;
 // Global state
 let currentEngineer = null;
 
-
 /**
  * Change window size via Tauri
  */

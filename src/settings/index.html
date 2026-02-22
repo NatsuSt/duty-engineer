@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechPanel Desktop</title>
+    <link rel="stylesheet" href="/assets/css/tailwind.css">
+    <link rel="stylesheet" href="/assets/css/all.min.css">
+    <script src="settings.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Скрываем скроллбар для Chrome, Safari и Opera (WebKit) */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Скрываем для IE, Edge и Firefox */
+        html {
+            -ms-overflow-style: none;  /* IE и Edge */
+            scrollbar-width: none;    /* Firefox */
+        }
+
+        .sidebar-item.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .engineer-item.selected {
+            background-color: #1e293b;
+            border-left: 4px solid #3b82f6;
+        }
+        .view-content {
+            display: none;
+        }
+        .view-content.active {
+            display: block;
+        }
+        /* Custom Titlebar for Tauri */
+        .titlebar {
+            height: 30px;
+            background: #1e293b;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+        .titlebar-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 45px;
+            height: 30px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        .titlebar-button:hover {
+            background-color: #334155;
+        }
+        .titlebar-button.close:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Tauri Titlebar Simulation -->
+    <div class="titlebar" data-tauri-drag-region>
+        <div id="minimizeButton" class="titlebar-button"><i class="fas fa-minus text-[10px]"></i></div>
+        <div id="toggleMaximizeButton" class="titlebar-button"><i class="far fa-square text-[10px]"></i></div>
+        <div id="closeButton" class="titlebar-button close"><i class="fas fa-times text-xs"></i></div>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
+            <div class="p-6">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Меню</h2>
+                <nav class="space-y-1">
+                    <div id="menu-engineers" data-view-engineers class="sidebar-item active flex items-center px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all">
+                        <i class="fas fa-user-gear w-5 mr-3 text-lg"></i>
+                        Інженери
+                    </div>
+                    <div id="menu-telephony" data-view-telephony class="sidebar-item flex items-center px-4 py-2.5 text-sm font-medium text-slate-400 rounded-lg hover:bg-slate-800 cursor-pointer transition-all">
+                        <i class="fas fa-phone-volume w-5 mr-3 text-lg"></i>
+                        Телефонія
+                    </div>
+                </nav>
+            </div>
+            
+            <div class="mt-auto p-6 border-t border-slate-800 bg-slate-900 text-center">
+                <span class="text-[10px] text-slate-600 font-bold tracking-widest uppercase">Admin Panel v1.0</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-slate-950">
+            
+            <!-- Engineers View -->
+            <div id="view-engineers" class="view-content active p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-100">Список інженерів</h1>
+                        <p class="text-slate-400 text-sm">Керування персоналом та контактними даними</p>
+                    </div>
+                    <button data-modal-toggle="add-modal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md shadow-blue-900/20 transition-all active:scale-95">
+                        <i class="fas fa-plus mr-2"></i> Додати
+                    </button>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                    <div id="engineers-list" class="divide-y divide-slate-800">
+                        <!-- Engineers will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telephony View -->
+            <div id="view-telephony" class="view-content p-8">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-slate-100">Налаштування телефонії</h1>
+                    <p class="text-slate-400 text-sm">Параметри під'єднання до сервера АТС</p>
+                </div>
+
+                <div class="max-w-2xl space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <h3 class="font-semibold text-slate-100 mb-4">Asterisk сервер</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Адреса сервера</label>
+                                <input id="server-address" type="text" value="sip.local.net" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Порт</label>
+                                <input id="server-port" type="number" value="5060" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Логін</label>
+                                <input id="ami-login" type="text" placeholder="admin_user" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Пароль</label>
+                                <input id="ami-password" type="password" placeholder="ami_password" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <h3 class="font-semibold text-slate-100 mb-4">Телефон оператора</h3>
+                        <div class="space-y-4">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Номер оператора</label>
+                                <input id="operator-number" type="number" placeholder="operator_phone" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Контекст оператора</label>
+                                <input id="operator-context" type="text" placeholder="operator_context" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors">
+                            </div>
+<!--                            <div class="flex items-center justify-between">-->
+<!--                                <span class="text-sm text-slate-300">Номер оператора</span>-->
+<!--                                <label class="relative inline-flex items-center cursor-pointer">-->
+<!--                                    <input type="checkbox" class="sr-only peer">-->
+<!--                                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>-->
+<!--                                </label>-->
+<!--                            </div>-->
+<!--                            <div class="flex items-center justify-between">-->
+<!--                                <span class="text-sm text-slate-300">Контекст оператора</span>-->
+<!--                                <label class="relative inline-flex items-center cursor-pointer">-->
+<!--                                    <input type="checkbox" checked class="sr-only peer">-->
+<!--                                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>-->
+<!--                                </label>-->
+<!--                            </div>-->
+                        </div>
+                    </div>
+
+                    <button id="save-config" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-900/20">
+                        Зберегти конфігурацію
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Engineer Modal -->
+    <div id="add-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" data-tauri-drag-region>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-100">Новий інженер</h3>
+                <button data-modal-close class="text-slate-500 hover:text-slate-300 transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ім'я</label>
+                    <input id="new-first-name" type="text" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Фамілія</label>
+                    <input id="new-last-name" type="text" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Номер телеону</label>
+                    <input id="new-phone" type="text" placeholder="+38(___) ___-__-__" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+            </div>
+            <div class="p-6 bg-slate-900/50 border-t border-slate-800 flex space-x-3">
+                <button data-modal-close class="flex-1 py-2 text-slate-400 hover:bg-slate-800 rounded-lg text-sm font-medium transition-all">Відмінна</button>
+                <button id="addEngineerButton" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-900/20">Додати</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-100">Редагувати інженера</h3>
+                <button data-modal-close class="text-slate-500 hover:text-slate-300 transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input id="edit-index" type="hidden"> <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Номер телефону</label>
+                <input id="edit-phone" type="text" placeholder="+38(___) ___-__-__" class="phone-mask w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            </div>
+            <div class="p-6 bg-slate-900/50 border-t border-slate-800 flex space-x-3">
+                <button data-modal-close class="flex-1 py-2 text-slate-400 hover:bg-slate-800 rounded-lg text-sm font-medium transition-all">Скасувати</button>
+                <button id="saveEngineerButton" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
